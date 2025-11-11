@@ -1,0 +1,151 @@
+﻿<!-- Inventory Edit Modal -->
+<div id="inventoryEditModal" class="modal" style="max-height: 80vh; overflow-y: auto;">
+	<div class="modal-content">
+		<span class="close" onclick="closeInventoryEditModal()">&times;</span>
+		<div class="modal-header bg-primary text-white">
+			<h3 class="modal-title">Edit Inventory</h3>
+		</div>
+		<div class="modal-body">
+			<form id="inventoryEditForm">
+				<input type="hidden" id="ItemID" name="ItemID" />
+				<div class="form-group">
+					<label for="MerchID"><b>Merch:</b></label>
+					<div class="input-group">
+						<select class="form-control" id="MerchID" name="MerchID">
+							<!-- Dropdown options will be populated dynamically -->
+						</select>
+						<div class="input-group-append">
+							<!-- Add input-group-append for the arrow icon -->
+							<span class="input-group-text">
+								<i class="bi bi-chevron-down"></i> <!-- Use any icon you prefer -->
+							</span>
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="LocationID"><b>Warehouse:</b></label>
+					<div class="input-group">
+						<select class="form-control" id="LocationID" name="LocationID">
+							<!-- Dropdown options will be populated dynamically -->
+						</select>
+						<div class="input-group-append">
+							<!-- Add input-group-append for the arrow icon -->
+							<span class="input-group-text">
+								<i class="bi bi-chevron-down"></i> <!-- Use any icon you prefer -->
+							</span>
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="Quantity"><b>Quantity:</b></label>
+					<input type="number" class="form-control" id="Quantity" name="Quantity" />
+				</div>
+				<div class="form-group">
+					<label for="SalePrice"><b>Sale Price:</b></label>
+					<input type="number" step="0.01" class="form-control" id="SalePrice" name="SalePrice" />
+				</div>
+				<div class="form-group">
+					<label for="PurchasePrice"><b>Purchase Price:</b></label>
+					<input type="number" step="0.01" class="form-control" id="PurchasePrice" name="PurchasePrice" />
+				</div>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button type="button" onclick="saveInventoryChanges()" class="btn btn-primary">Save</button>
+			<button type="button" class="btn btn-secondary" onclick="closeInventoryEditModal()">Close</button>
+		</div>
+	</div>
+</div>
+
+<script>
+	
+	// Function to close the inventory edit modal
+	function closeInventoryEditModal() {
+		document.getElementById("inventoryEditModal").style.display = "none";
+	}
+
+	// Function to open the inventory edit modal with data
+	function openEditModal(ItemID, MerchID, LocationID, Quantity, SalePrice, PurchasePrice) {
+
+		$.ajax({
+			url: '/Warehouse/GetWarehouses', // Update with your controller action to get vendors
+			type: 'GET',
+			success: function (warehouses) {
+				// Clear existing options
+				$('#LocationID').empty();
+				// Populate the dropdown with vendors
+				$('#LocationID').append('<option value="0">Select Location</option>');
+				warehouses.forEach(function (warehouse) {
+					$('#LocationID').append('<option value="' + warehouse.locationID + '">' + warehouse.warehouseType + '</option>');
+				});
+				// Select the current location if available
+				$('#LocationID').val(LocationID);
+			},
+			error: function (error) {
+				console.error(error);
+				// Handle error if necessary
+			}
+		});
+
+		$.ajax({
+			url: '/Merch/GetMerches', // Update with your controller action to get merches
+			type: 'GET',
+			success: function (merches) {
+				// Clear existing options
+				$('#MerchID').empty();
+				// Populate the dropdown with merches
+				$('#MerchID').append('<option value="0">Select Merch</option>');
+				merches.forEach(function (merch) {
+					$('#MerchID').append('<option value="' + merch.merchID + '">' + merch.itemName + '</option>');
+				});
+				// Select the current merch if available
+				$('#MerchID').val(MerchID);
+			},
+			error: function (error) {
+				console.error(error);
+				// Handle error if necessary
+			}
+		});
+
+		$('#ItemID').val(ItemID); // Select the appropriate merch item in the dropdown
+		$('#MerchID').val(MerchID); // Select the appropriate merch item in the dropdown
+		$('#LocationID').val(LocationID); // Select the appropriate merch item in the dropdown
+		document.getElementById("Quantity").value = Quantity;
+		document.getElementById("SalePrice").value = SalePrice;
+		document.getElementById("PurchasePrice").value = PurchasePrice;
+
+		document.getElementById("inventoryEditModal").style.display = "block";
+	}
+
+	// Function to save changes to the inventory
+	function saveInventoryChanges() {
+		var formData = {
+			ItemID: $('#ItemID').val(),
+			MerchID: $('#MerchID').val(), // Get the selected merch item from the dropdown
+			LocationID: $('#LocationID').val(), // Get the selected merch item from the dropdown
+			Quantity: $('#Quantity').val(),
+			SalePrice: $('#SalePrice').val(),
+			PurchasePrice: $('#PurchasePrice').val()
+		};
+
+		console.log(formData);
+
+		$.ajax({
+			url: '/Inventory/SaveChanges', 
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(formData),
+			success: function (data) {
+				console.log(data);
+				alert(data);
+				closeInventoryEditModal();
+				location.reload(); // Reload the page after successful save
+			},
+			error: function (error) {
+				console.error(error);
+				alert(error.responseText);
+			}
+		});
+	}
+
+</script>

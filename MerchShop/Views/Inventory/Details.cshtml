@@ -1,0 +1,42 @@
+﻿@model MerchShop.Models.DomainModels.Inventory
+
+@{
+    ViewData["Title"] = "Inventory Details";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div>
+    <h4>Inventory ID: @Model.ItemID</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">Merch ID</dt>
+        <dd class="col-sm-10">@Model.MerchID</dd>
+
+        <dt class="col-sm-2">Merch Name</dt>
+        <dd class="col-sm-10">@Model.Merch.ItemName</dd>
+
+        <dt class="col-sm-2">Vendor ID</dt>
+        <dd class="col-sm-10">@Model.Merch.VendorID</dd>
+
+        <dt class="col-sm-2">Inventory Quantity</dt>
+        <dd class="col-sm-10">@Model.Quantity</dd>
+
+        <dt class="col-sm-2">Purchase Price</dt>
+        <dd class="col-sm-10">@Model.PurchasePrice</dd>
+
+        <dt class="col-sm-2">Sale Price</dt>
+        <dd class="col-sm-10">@Model.SalePrice</dd>
+
+        <dt class="col-sm-2">Warehouse ID</dt>
+        <dd class="col-sm-10">@Model.LocationID</dd>
+
+        <dt class="col-sm-2">Warehouse Shelf #</dt>
+        <dd class="col-sm-10">@Model.Warehouse.ShelfNumber</dd>
+
+        <dt class="col-sm-2">Warehouse Type</dt>
+        <dd class="col-sm-10">@Model.Warehouse.WarehouseType</dd>
+    </dl>
+</div>
+
+<a asp-action="Index" class="btn btn-primary">Back to Inventory List</a>

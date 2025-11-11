@@ -1,0 +1,183 @@
+﻿@using MerchShop.Models.DomainModels
+@model MerchShop.Models.MerchReviewListViewModel
+@{
+	ViewData["Title"] = "Merch Reviews";
+	MerchReviewGridData current = Model.CurrentRoute;
+	GridData routes = Model.CurrentRoute.Clone();
+}
+
+<head>
+	<link href="~/css/modal.css" rel="stylesheet" />
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+	<style>
+		thead a {
+			text-decoration: none;
+		}
+	</style>
+</head>
+
+<div class="container-fluid">
+	<h1 style="text-align: center; display: flex; justify-content: space-between;">
+		@ViewData["Title"]
+		<button class="btn btn-primary" onclick="openEditModal(0,0,'')">
+			<i class="bi bi-plus"></i> Add Merch Review
+		</button>
+	</h1>
+	<br />
+	<table class="table">
+		<thead style="text-align: center">
+			<tr>
+				<th>Merch ID</th>
+				<th>
+					@{
+						routes.SetSortAndDirection(nameof(Merch), current);
+					}
+					<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+					   class="text-black">
+						<span style="display: inline-block;">Merch Title</span>
+						<div style="display: inline-block; vertical-align: middle;">
+							@if (current.SortField == nameof(Inventory.Merch))
+							{
+								if (current.SortDirection == "asc")
+								{
+									<i class="bi bi-caret-up-fill"></i>
+								}
+								else
+								{
+									<i class="bi bi-caret-down-fill"></i>
+								}
+							}
+							else
+							{
+								<i class="bi bi-caret-up-fill" style="color:transparent;"></i>
+								<i class="bi bi-caret-down-fill" style="color:transparent;"></i>
+							}
+						</div>
+					</a>
+				</th>
+				<th>
+					@{
+						routes.SetSortAndDirection(nameof(Merch.Type), current);
+					}
+					<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+					   class="text-black">
+						Merch Type
+						@if (current.SortField == nameof(Merch.Type))
+						{
+							if (current.SortDirection == "asc")
+							{
+								<i class="bi bi-caret-up-fill"></i>
+							}
+							else
+							{
+								<i class="bi bi-caret-down-fill"></i>
+							}
+						}
+						else
+						{
+							<i class="bi bi-caret-up-fill" style="color:transparent;"></i>
+							<i class="bi bi-caret-down-fill" style="color:transparent;"></i>
+						}
+					</a>
+				</th>
+				<th>
+					@{
+						routes.SetSortAndDirection(nameof(MerchReview.ReviewScore), current);
+					}
+					<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+					   class="text-black">
+						Review Score
+						@if (current.SortField == nameof(MerchReview.ReviewScore))
+						{
+							if (current.SortDirection == "asc")
+							{
+								<i class="bi bi-caret-up-fill"></i>
+							}
+							else
+							{
+								<i class="bi bi-caret-down-fill"></i>
+							}
+						}
+						else
+						{
+							<i class="bi bi-caret-up-fill" style="color:transparent;"></i>
+							<i class="bi bi-caret-down-fill" style="color:transparent;"></i>
+						}
+					</a>
+				</th>
+				<th>
+					@{
+						routes.SetSortAndDirection(nameof(MerchReview.ReviewText), current);
+					}
+					<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+					   class="text-black">
+						Review Text
+						@if (current.SortField == nameof(MerchReview.ReviewText))
+						{
+							if (current.SortDirection == "asc")
+							{
+								<i class="bi bi-caret-up-fill"></i>
+							}
+							else
+							{
+								<i class="bi bi-caret-down-fill"></i>
+							}
+						}
+						else
+						{
+							<i class="bi bi-caret-up-fill" style="color:transparent;"></i>
+							<i class="bi bi-caret-down-fill" style="color:transparent;"></i>
+						}
+					</a>
+				</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody style="text-align: center;">
+			@foreach (MerchReview merchReview in Model.MerchReviews)
+			{
+				<tr>
+					<td>@merchReview.MerchID</td>
+					<td>
+						<a asp-action="Details" asp-route-id="@merchReview.MerchID" asp-route-slug="@merchReview.Merch.ItemName.Slug()">
+							@merchReview.Merch.ItemName
+						</a>
+					</td>
+					<td>
+						<a asp-action="Details" asp-route-id="@merchReview.MerchID" asp-route-slug="@merchReview.Merch.ItemName.Slug()">
+							@merchReview.Merch.Type
+						</a>
+					</td>
+					<td>
+						@merchReview.ReviewScore
+					</td>
+					<td>
+						@merchReview.ReviewText
+					</td>
+					<td>
+						@* <a href="#" onclick="openEditModal(@merchReview.MerchID,'@merchReview.ReviewScore','@merchReview.ReviewText')" class="btn btn-primary">
+							<i class="bi bi-pencil"></i> Edit
+						</a> *@
+						<a href="#" class="btn btn-danger" onclick="openDeleteModal(@merchReview.MerchID)">
+							<i class="bi bi-trash"></i> Delete
+						</a>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	@{
+		routes = current.Clone();
+		for (int i = 1; i <= Model.TotalPages; i++)
+		{
+			routes.PageNumber = i;
+			string active = @Nav.Active(i, current.PageNumber);
+			<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+			   class="btn btn-outline-primary @active">@i</a>
+		}
+	}
+</div>
+
+<!-- Include the Edit Modal -->
+@Html.Partial("_EditModal")
+@Html.Partial("_DeleteModal")

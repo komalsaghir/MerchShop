@@ -1,0 +1,26 @@
+﻿@model MerchShop.Models.DomainModels.Merch
+
+@{
+    ViewData["Title"] = "Merch Details";
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<div>
+    <h4>Merch ID: @Model.MerchID</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">Item Name</dt>
+        <dd class="col-sm-10">@Model.ItemName</dd>
+
+        <dt class="col-sm-2">Type</dt>
+        <dd class="col-sm-10">@Model.Type</dd>
+
+        <dt class="col-sm-2">Vendor</dt>
+        <dd class="col-sm-10">@Model.Vendor.Name</dd>
+
+        <!-- Add more details as needed -->
+    </dl>
+</div>
+
+<a asp-action="Index" class="btn btn-primary">Back to Merch Reviews</a>

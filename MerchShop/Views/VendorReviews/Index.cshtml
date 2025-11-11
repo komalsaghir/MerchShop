@@ -1,0 +1,109 @@
+﻿@using MerchShop.Models.DomainModels
+@model MerchShop.Models.VendorReviewListViewModel
+@{
+	ViewData["Title"] = "Vendor Reviews";
+	VendorReviewGridData current = Model.CurrentRoute;
+	GridData routes = Model.CurrentRoute.Clone();
+}
+
+<head>
+	<link href="~/css/modal.css" rel="stylesheet" />
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+	<style>
+		thead a {
+			text-decoration: none;
+		}
+	</style>
+</head>
+
+<div class="container-fluid">
+	<h1 style="text-align: center; display: flex; justify-content: space-between;">
+		@ViewData["Title"]
+		<button class="btn btn-primary" onclick="openEditModal(0,0,'')">
+			<i class="bi bi-plus"></i> Add Vendor Review
+		</button>
+	</h1>
+	<br />
+	<table class="table">
+		<thead style="text-align: center">
+			<tr>
+				<th>Merch ID</th>
+				<th>
+					@{
+						routes.SetSortAndDirection(nameof(Vendor), current);
+					}
+					<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+					   class="text-black">
+						<span style="display: inline-block;">Vendor</span>
+						<div style="display: inline-block; vertical-align: middle;">
+							@if (current.SortField == nameof(Vendor.Name))
+							{
+								if (current.SortDirection == "asc")
+								{
+									<i class="bi bi-caret-up-fill"></i>
+								}
+								else
+								{
+									<i class="bi bi-caret-down-fill"></i>
+								}
+							}
+							else
+							{
+								<i class="bi bi-caret-up-fill" style="color:transparent;"></i>
+								<i class="bi bi-caret-down-fill" style="color:transparent;"></i>
+							}
+						</div>
+					</a>
+				</th>
+				<th>
+					Review Score
+				</th>
+				<th>
+					Review Text
+				</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody style="text-align: center;">
+			@foreach (VendorReview vendorReview in Model.VendorReviews)
+			{
+				<tr>
+					<td>@vendorReview.VendorID</td>
+					<td>
+						<a asp-action="Details" asp-route-id="@vendorReview.VendorID" asp-route-slug="@vendorReview.Vendor.Name.Slug()">
+							@vendorReview.Vendor.Name
+						</a>
+					</td>
+					<td>
+						@vendorReview.ReviewScore
+					</td>
+					<td>
+						@vendorReview.ReviewText
+					</td>
+					<td>
+						@* <a href="#" onclick="openEditModal(@merchReview.MerchID,'@merchReview.ReviewScore','@merchReview.ReviewText')" class="btn btn-primary">
+					<i class="bi bi-pencil"></i> Edit
+					</a> *@
+						<a href="#" class="btn btn-danger" onclick="openDeleteModal(@vendorReview.VendorID)">
+							<i class="bi bi-trash"></i> Delete
+						</a>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	@{
+		routes = current.Clone();
+		for (int i = 1; i <= Model.TotalPages; i++)
+		{
+			routes.PageNumber = i;
+			string active = @Nav.Active(i, current.PageNumber);
+			<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+			   class="btn btn-outline-primary @active">@i</a>
+		}
+	}
+</div>
+
+<!-- Include the Edit Modal -->
+@Html.Partial("_EditModal")
+@Html.Partial("_DeleteModal")

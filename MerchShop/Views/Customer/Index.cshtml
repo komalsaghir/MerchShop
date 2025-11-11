@@ -1,0 +1,52 @@
+﻿@model IEnumerable<MerchShop.Models.DomainModels.Customer>
+@{
+    ViewData["Title"] = "Customers";
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<head>
+    <link href="~/css/modal.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+
+<h1 style="text-align: center; display: flex; justify-content: space-between;">
+    @ViewData["Title"]
+    <button class="btn btn-primary" onclick="openEditModal(0, '', '', '')">
+        <i class="bi bi-plus"></i> Add Customer
+    </button>
+</h1>
+<br />
+<table class="table">
+    <thead style="text-align: center;">
+        <tr>
+            <th>ID</th>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody style="text-align: center;">
+        @foreach (var customer in Model)
+        {
+            <tr>
+                <td>@customer.CustomerID</td>
+                <td>@customer.FirstName</td>
+                <td>@customer.LastName</td>
+                <td>@customer.Email</td>
+                <td>
+                    <a href="#" onclick="openEditModal(@customer.CustomerID, '@customer.FirstName', '@customer.LastName','@customer.Email')" class="btn btn-primary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </a>
+                    <a href="#" class="btn btn-danger" onclick="openDeleteModal(@customer.CustomerID)">
+                        <i class="bi bi-trash"></i> Delete
+                    </a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<!-- Include the Edit Modal -->
+@Html.Partial("_EditCustomerModal")
+@Html.Partial("_DeleteCustomerModal")

@@ -1,0 +1,102 @@
+﻿<!--Merch Review Edit Modal -->
+<div id="reviewEditModal" class="modal" style="max-height: 80vh; overflow-y: auto;">
+	<div class="modal-content">
+		<span class="close" onclick="closeReviewEditModal()">&times;</span>
+		<div class="modal-header bg-primary text-white">
+			<h3 class="modal-title">Add Review</h3>
+		</div>
+		<div class="modal-body">
+			<form id="inventoryEditForm">
+				<div class="form-group">
+					<label for="MerchID"><b>Merch:</b></label>
+					<div class="input-group">
+						<select class="form-control" id="MerchID" name="MerchID">
+							<!-- Dropdown options will be populated dynamically -->
+						</select>
+						<div class="input-group-append">
+							<!-- Add input-group-append for the arrow icon -->
+							<span class="input-group-text">
+								<i class="bi bi-chevron-down"></i> <!-- Use any icon you prefer -->
+							</span>
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="ReviewScore"><b>Review Score (Out of 5):</b></label>
+					<input type="number" step="0.01" max="5" min="0" class="form-control" id="ReviewScore" name="ReviewScore" />
+				</div>
+				<div class="form-group">
+					<label for="ReviewText"><b>Review Text:</b></label>
+					<input type="text" class="form-control" id="ReviewText" name="ReviewText" />
+				</div>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button type="button" onclick="saveReviewChanges()" class="btn btn-primary">Save</button>
+			<button type="button" class="btn btn-secondary" onclick="closeReviewEditModal()">Close</button>
+		</div>
+	</div>
+</div>
+
+<script>
+
+	// Function to close the merch review edit modal
+	function closeReviewEditModal() {
+		document.getElementById("reviewEditModal").style.display = "none";
+	}
+
+	// Function to open the inventory edit modal with data
+	function openEditModal(MerchID, ReviewScore, ReviewText) {
+
+		$.ajax({
+			url: '/MerchReviews/GetMerches', // Update with your controller action to get merches
+			type: 'GET',
+			success: function (merches) {
+				// Clear existing options
+				$('#MerchID').empty();
+				// Populate the dropdown with merches
+				$('#MerchID').append('<option value="0">Select Merch</option>');
+				merches.forEach(function (merch) {
+					$('#MerchID').append('<option value="' + merch.merchID + '">' + merch.itemName + '</option>');
+				});
+				// Select the current merch if available
+				$('#MerchID').val(MerchID);
+			},
+			error: function (error) {
+				console.error(error);
+				// Handle error if necessary
+			}
+		});
+
+		$('#MerchID').val(MerchID); // Select the appropriate merch item in the dropdown
+		document.getElementById("ReviewScore").value = ReviewScore;
+		document.getElementById("ReviewText").value = ReviewText;
+
+		document.getElementById("reviewEditModal").style.display = "block";
+	}
+
+	// Function to save changes to the inventory
+	function saveReviewChanges() {
+		var formData = {
+			MerchID: $('#MerchID').val(), // Get the selected merch item from the dropdown
+			ReviewScore: $('#ReviewScore').val(),
+			ReviewText: $('#ReviewText').val()
+		};
+
+		$.ajax({
+			url: '/MerchReviews/SaveChanges',
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(formData),
+			success: function (data) {
+				alert(data);
+				closeReviewEditModal();
+				location.reload();
+			},
+			error: function (error) {
+				console.error(error);
+				alert(error.responseText);
+			}
+		});
+	}
+</script>

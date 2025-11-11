@@ -1,0 +1,143 @@
+﻿@{
+	ViewData["Title"] = "Order";
+}
+
+<div class="container">
+	<h2>Available Merches for Order</h2>
+	<div id="merchList" class="row">
+		<!-- Merchandise list will be populated dynamically here -->
+	</div>
+	<div class="row justify-content-end mt-3">
+		<div class="col-auto">
+			<button onclick="placeOrder()" class="btn btn-primary">Place Order</button>
+		</div>
+	</div>
+</div>
+
+
+<script>
+	// Fetch merches data and populate the list
+	async function fetchMerches() {
+		try {
+			const response = await fetch('/MerchReviews/GetMerchesDetail'); // Update with your backend endpoint
+			const merches = await response.json();
+
+			const merchListDiv = document.getElementById('merchList');
+			merchListDiv.innerHTML = ''; // Clear previous content
+
+			merches.forEach(merch => {
+				const merchCol = document.createElement('div');
+				merchCol.classList.add('col-md-4'); // Bootstrap column class
+				merchCol.innerHTML = `
+						<div class="card mb-4">
+							<div class="card-body">
+								<div class="form-check">
+									<input type="checkbox" class="form-check-input" id="merchCheckbox_${merch.merchID}" value="${merch.merchID}">
+									<label class="form-check-label" for="merchCheckbox_${merch.merchID}">${merch.itemName}</label>
+								</div>
+								<p class="card-text">${merch.itemDescription}</p>
+								<p class="card-text">Type: ${merch.type}</p>
+								<p class="card-text">Rating: ${merch.rating} ${generateRatingStars(merch.rating)}</p>
+								<p class="card-text">Price: <span id="price_${merch.merchID}"> ${merch.price}</span></p>
+								<input type="number" class="form-control mt-2" id="quantity_${merch.merchID}" placeholder="Quantity" />
+							</div>
+						</div>
+					`;
+				merchListDiv.appendChild(merchCol);
+			});
+		} catch (error) {
+			console.error('Error fetching merches:', error);
+		}
+	}
+
+	// Function to generate star ratings dynamically
+	function generateRatingStars(rating) {
+		const fullStars = Math.floor(rating); // Extract the integer part for full stars
+		const remainder = rating - fullStars; // Extract the decimal part for half star
+
+		let starsHTML = '';
+
+		// Add full stars
+		for (let i = 0; i < fullStars; i++) {
+			starsHTML += '<i class="bi bi-star-fill text-warning"></i>'; // Full star
+		}
+
+		// Calculate the remaining empty stars needed to make up a total of 5 stars
+		const emptyStars = 5 - Math.ceil(rating);
+
+		// Add half star if remainder is greater than 0
+		if (remainder > 0) {
+			starsHTML += '<i class="bi bi-star-half text-warning"></i>'; // Half star
+			//emptyStars = emptyStars - 1;
+		}
+
+		// Add remaining empty stars
+		for (let i = 0; i < emptyStars; i++) {
+			starsHTML += '<i class="bi bi-star text-warning"></i>'; // Empty star
+		}
+
+		return starsHTML;
+	}
+
+	// Function to place an order
+	function placeOrder() {
+		// Collect order details from the form
+		const orderDetails = [];
+		const checkboxes = document.querySelectorAll('[id^=merchCheckbox]:checked');
+		checkboxes.forEach(checkbox => {
+			const merchID = checkbox.value;
+			const quantityInput = document.getElementById(`quantity_${merchID}`);
+			const priceSpan = document.getElementById(`price_${merchID}`);
+			const quantity = quantityInput.value;
+			const price = priceSpan.textContent.trim();
+			// Parse quantity as a number
+			const quantityValue = parseFloat(quantity);
+
+			// Check if the parsed quantity is a valid number and greater than 0
+			if (!isNaN(quantityValue) && quantityValue > 0) {
+				orderDetails.push({ MerchID: merchID, Quantity: quantityValue, Price: price });
+			} else {
+				// Handle invalid quantity input
+				alert("Invalid quantity input for selected merch");
+			}
+		});
+
+		// Check if orderDetails is still empty
+		if (orderDetails.length === 0) {
+			// Perform actions if orderDetails is empty
+			alert("No valid order details found.");
+		} else {
+			// Send order details to the server
+			fetch('/Order/PlaceOrder', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(orderDetails)
+			})
+				.then(response => {
+					if (response.ok) {
+						return response.text(); // Read response as text
+					}
+					throw new Error('Failed to place order');
+				})
+				.then(message => {
+					console.log('Order placed successfully:', message);
+					// Provide feedback to the user based on the message received
+					alert(message); // Alert the success message
+					// Reload the page
+					location.reload();
+				})
+				.catch(error => {
+					console.error('Error placing order:', error);
+					// Provide feedback to the user
+					alert('Failed to place order. Please try again later.');
+				});
+		}
+	}
+
+	// Fetch merches when the page loads
+	window.onload = function () {
+		fetchMerches();
+	};
+</script>

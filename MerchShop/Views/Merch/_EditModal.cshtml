@@ -1,0 +1,126 @@
+﻿<div id="editModal" class="modal" style="max-height: 80vh; overflow-y: auto;">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <div class="modal-header bg-primary text-white">
+            <h3 class="modal-title">Edit Merch</h3>
+        </div>
+        <div class="modal-body">
+            <form id="editForm">
+                <input type="hidden" id="MerchID" name="MerchID" />
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="Name"><b>Name:</b></label>
+                        <input type="text" class="form-control" id="ItemName" name="ItemName" />
+                    </div>
+                    <div class="form-group">
+                        <label for="ItemDescription"><b>Item Description:</b></label>
+                        <input type="text" class="form-control" id="ItemDescription" name="ItemDescription" />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="Type"><b>Type:</b></label>
+                        <input type="text" class="form-control" id="Type" name="Type" />
+                    </div>
+                    <div class="form-group">
+                        <label for="Rating"><b>Rating:</b></label>
+                        <input type="number" step="0.01" class="form-control" id="Rating" name="Rating" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="VendorID"><b>Vendor:</b></label>
+                    <div class="input-group">
+                        <!-- Add input-group container -->
+                        <select class="form-control" id="VendorID" name="VendorID">
+                            <!-- Dropdown options will be populated dynamically -->
+                        </select>
+                        <div class="input-group-append">
+                            <!-- Add input-group-append for the arrow icon -->
+                            <span class="input-group-text">
+                                <i class="bi bi-chevron-down"></i> <!-- Use any icon you prefer -->
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" onclick="saveChanges()" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // JavaScript function to close the modal
+    function closeEditModal() {
+        document.getElementById("editModal").style.display = "none";
+    }
+
+    function openEditModal(MerchID, VendorID, ItemName, ItemDescription, Type, Rating) {
+        document.getElementById("MerchID").value = MerchID;
+        document.getElementById("VendorID").value = VendorID;
+        document.getElementById("ItemName").value = ItemName;
+        document.getElementById("ItemDescription").value = ItemDescription;
+        document.getElementById("Rating").value = Rating;
+        document.getElementById("Type").value = Type;
+
+        // Fetch the list of vendors from the server
+    $.ajax({
+        url: '/Vendor/GetVendors', // Update with your controller action to get vendors
+        type: 'GET',
+        success: function (vendors) {
+            // Clear existing options
+            $('#VendorID').empty();
+            // Populate the dropdown with vendors
+                $('#VendorID').append('<option value="0">Select Vendor</option>');
+            vendors.forEach(function (vendor) {
+                $('#VendorID').append('<option value="' + vendor.vendorID + '">' + vendor.name + '</option>');
+            });
+            // Select the current vendor if available
+            $('#VendorID').val(VendorID);
+        },
+        error: function (error) {
+            console.error(error);
+            // Handle error if necessary
+        }
+    });
+
+        document.getElementById("editModal").style.display = "block";
+    }
+
+    function saveChanges() {
+        // Gather form data
+        var formData = {
+            MerchID: $('#MerchID').val(),
+            VendorID: $('#VendorID').val(),
+            ItemName: $('#ItemName').val(),
+            ItemDescription: $('#ItemDescription').val(),
+            Rating: $('#Rating').val(),
+            Type: $('#Type').val()
+        };
+
+        // Send AJAX request
+        $.ajax({
+            url: '/Merch/SaveChanges', // Update with your controller and action names
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(formData),
+            success: function (data) {
+                // Handle success response
+                console.log(data);
+                alert(data);
+                // Close the modal and perform other actions
+                closeEditModal();
+                // Reload the page
+                location.reload();
+            },
+            error: function (error) {
+                // Handle error response
+                console.error(error);
+                alert(error.responseText);
+            }
+        });
+    }
+</script>

@@ -1,0 +1,164 @@
+﻿@using MerchShop.Models.DomainModels
+@model MerchShop.Models.InventoryListViewModel
+@{
+	ViewData["Title"] = "Inventory List";
+	InventoryGridData current = Model.CurrentRoute;
+	GridData routes = Model.CurrentRoute.Clone();
+}
+
+<head>
+	<link href="~/css/modal.css" rel="stylesheet" />
+	<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+	<style>
+		thead a {
+			text-decoration: none;
+		}
+	</style>
+</head>
+
+<div class="container-fluid">
+	<h1 style="text-align: center; display: flex; justify-content: space-between;">
+		@ViewData["Title"]
+		<button class="btn btn-primary" onclick="openEditModal(0,0,0,0,0,0)">
+			<i class="bi bi-plus"></i> Add Inventory
+		</button>
+	</h1>
+	<br />
+	<table class="table">
+		<thead style="text-align: center">
+			<tr>
+				<th>Inventory ID</th>
+				<th>
+					@{
+						routes.SetSortAndDirection(nameof(Inventory.Merch.ItemName), current);
+					}
+					<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+					   class="text-black">
+						<span style="display: inline-block;">Merch Title</span>
+						<div style="display: inline-block; vertical-align: middle;">
+							<!-- Show sorting arrows based on the current state -->
+							@if (current.SortField == nameof(Inventory.Merch.ItemName))
+							{
+								if (current.SortDirection == "asc")
+								{
+									<i class="bi bi-caret-up-fill"></i>
+								}
+								else
+								{
+									<i class="bi bi-caret-down-fill"></i>
+								}
+							}
+							else
+							{
+								<i class="bi bi-caret-up-fill" style="color:transparent;"></i>
+								<i class="bi bi-caret-down-fill" style="color:transparent;"></i>
+							}
+						</div>
+					</a>
+				</th>
+				<th>
+					<a class="text-black">Merch Vendor</a>
+				</th>
+				<th>
+					@{
+						routes.SetSortAndDirection(nameof(Inventory.Quantity), current);
+					}
+					<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+					   class="text-black">
+						Quantity
+						@if (current.SortField == nameof(Inventory.Quantity))
+						{
+						if (current.SortDirection == "asc")
+						{
+						<i class="bi bi-caret-up-fill"></i>
+						}
+						else
+						{
+						<i class="bi bi-caret-down-fill"></i>
+						}
+						}
+						else
+						{
+						<i class="bi bi-caret-up-fill" style="color:transparent;"></i>
+						<i class="bi bi-caret-down-fill" style="color:transparent;"></i>
+						}
+					</a>
+				</th>
+				<th>
+					@{
+						routes.SetSortAndDirection(nameof(Inventory.SalePrice), current);
+					}
+					<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+					   class="text-black">Sale Price
+						@if (current.SortField == nameof(Inventory.SalePrice))
+						{
+							if (current.SortDirection == "asc")
+							{
+								<i class="bi bi-caret-up-fill"></i>
+							}
+							else
+							{
+								<i class="bi bi-caret-down-fill"></i>
+							}
+						}
+						else
+						{
+							<i class="bi bi-caret-up-fill" style="color:transparent;"></i>
+							<i class="bi bi-caret-down-fill" style="color:transparent;"></i>
+						}
+					</a>
+				</th>
+				<th>Actions</th>
+			</tr>
+		</thead>
+		<tbody style="text-align: center;">
+			@foreach (Inventory inventory in Model.Inventories)
+			{
+				<tr>
+					<td>@inventory.ItemID</td>
+					<td>
+						<a asp-action="Details" asp-route-id="@inventory.ItemID" asp-route-slug="@inventory.Merch.ItemName.Slug()">
+							@inventory.Merch.ItemName
+						</a>
+					</td>
+
+					<td>
+						@inventory.Merch.VendorID
+					</td>
+					<td>
+						<a asp-action="Details" asp-route-id="@inventory.ItemID" asp-route-slug="@inventory.Quantity.ToString().Slug()">
+							@inventory.Quantity
+						</a>
+					</td>
+					<td>
+						<a asp-action="Details" asp-route-id="@inventory.ItemID" asp-route-slug="@inventory.SalePrice.ToString().Slug()">
+							@inventory.SalePrice
+						</a>
+					</td>
+					<td>
+						<a href="#" onclick="openEditModal(@inventory.ItemID,@inventory.MerchID, @inventory.LocationID,@inventory.Quantity,@inventory.SalePrice,@inventory.PurchasePrice)" class="btn btn-primary">
+							<i class="bi bi-pencil"></i> Edit
+						</a>
+						<a href="#" class="btn btn-danger" onclick="openDeleteModal(@inventory.ItemID)">
+							<i class="bi bi-trash"></i> Delete
+						</a>
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+	@{
+		routes = current.Clone();
+		for (int i = 1; i <= Model.TotalPages; i++)
+		{
+			routes.PageNumber = i;
+			string active = @Nav.Active(i, current.PageNumber);
+			<a asp-action="Index" asp-all-route-data="@routes.ToDictionary()"
+			   class="btn btn-outline-primary @active">@i</a>
+		}
+	}
+</div>
+
+<!-- Include the Edit Modal -->
+@Html.Partial("_EditModal")
+@Html.Partial("_DeleteModal")

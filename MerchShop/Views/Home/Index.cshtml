@@ -1,0 +1,145 @@
+﻿@using MerchShop.Models.DomainModels
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<AppUser> UserManager
+
+@{
+	ViewData["Title"] = "Home Page";
+	var isAdmin = User.IsInRole("Admin");
+	var user = await UserManager.GetUserAsync(User);
+	var firstName = user?.FirstName;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>@ViewData["Title"]</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/css/bootstrap.min.css">
+	<style>
+		body {
+			background-color: #f8f9fa;
+			font-family: Arial, sans-serif;
+		}
+
+		.jumbotron {
+			background-color: #343a40;
+			color: #fff;
+			padding: 40px 20px;
+			border-radius: 10px;
+		}
+
+		h1, p {
+			text-align: center;
+		}
+
+		a {
+			color: #007bff;
+		}
+
+			a:hover {
+				text-decoration: none;
+				color: #0056b3;
+			}
+
+		/* Additional styles for images */
+		.carousel-item img {
+			max-width: 100%;
+			height: auto;
+			border-radius: 10px;
+		}
+
+		/* Additional styles for the carousel captions */
+		.carousel-caption {
+			background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background for captions */
+			color: white; /* White text color for captions */
+			border-radius: 10px;
+			padding: 10px;
+		}
+
+			/* Styles for the h5 and p elements inside the carousel captions */
+			.carousel-caption h5,
+			.carousel-caption p {
+				color: white; /* White text color for h5 and p elements */
+			}
+	</style>
+</head>
+<body>
+	<div class="row">
+		<div class="col-md-6">
+			<div class="jumbotron">
+				@if (!string.IsNullOrEmpty(firstName))
+				{
+					<h1 class="display-4">Welcome, @firstName</h1>
+				}
+				else
+				{
+					<h1 class="display-4">Welcome</h1>
+				}
+				@if (isAdmin)
+				{
+					<p class="lead">Manage your merch database efficiently.</p>
+					<hr class="my-4">
+					<p>View, edit, and manage inventory, vendors, and orders.</p>
+					<br /><br />
+					<a class="btn btn-primary btn-lg float-end" href="@Url.Action("Index","Merch")" role="button">Manage Merch</a>
+					<br /><br />
+				}
+				else
+				{
+					<p class="lead">Explore and interact with our merch database.</p>
+					<hr class="my-4">
+					<p>Rate merches, vendors, and place orders.</p>
+					<br /><br />
+					<a class="btn btn-primary btn-lg float-end" href="@Url.Action("ViewMerches","Merch")" role="button">Explore</a>
+					<br /><br />
+				}
+			</div>
+		</div>
+		<div class="col-md-6">
+			<div id="carouselExampleControls" class="carousel slide" data-bs-ride="carousel">
+				<div class="carousel-inner">
+					<div class="carousel-item active">
+						<img src="~/images/electronics.jpg" class="d-block w-100" alt="Electronics">
+						<div class="carousel-caption d-none d-md-block">
+							<h5>Electronics</h5>
+							<p>Discover the latest electronic gadgets.</p>
+						</div>
+					</div>
+					<div class="carousel-item">
+						<img src="~/images/shirts.png" class="d-block w-100" alt="Electronics">
+						<div class="carousel-caption d-none d-md-block">
+							<h5>Fashion</h5>
+							<p>Explore trendy fashion collections.</p>
+						</div>
+					</div>
+					<div class="carousel-item">
+						<img src="~/images/shirts.jpg" class="d-block w-100" alt="Clothing">
+						<div class="carousel-caption d-none d-md-block">
+							<h5>Clothing</h5>
+							<p>Find stylish clothing for every occasion.</p>
+						</div>
+					</div>
+				</div>
+				<button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="prev">
+					<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+					<span class="visually-hidden">Previous</span>
+				</button>
+				<button class="carousel-control-next" type="button" data-bs-target="#carouselExampleControls" data-bs-slide="next">
+					<span class="carousel-control-next-icon" aria-hidden="true"></span>
+					<span class="visually-hidden">Next</span>
+				</button>
+			</div>
+		</div>
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+	<script>
+		// Auto slide the carousel every 3 seconds
+		var carousel = document.querySelector('.carousel');
+		var carouselInstance = new bootstrap.Carousel(carousel, {
+			interval: 2000
+		});
+	</script>
+</body>
+
+</html>

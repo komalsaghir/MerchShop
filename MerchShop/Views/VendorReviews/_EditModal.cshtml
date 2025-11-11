@@ -1,0 +1,102 @@
+﻿<!--Vendor Review Edit Modal -->
+<div id="reviewEditModal" class="modal" style="max-height: 80vh; overflow-y: auto;">
+	<div class="modal-content">
+		<span class="close" onclick="closeReviewEditModal()">&times;</span>
+		<div class="modal-header bg-primary text-white">
+			<h3 class="modal-title">Add Review</h3>
+		</div>
+		<div class="modal-body">
+			<form id="inventoryEditForm">
+				<div class="form-group">
+					<label for="VendorID"><b>Vendor:</b></label>
+					<div class="input-group">
+						<select class="form-control" id="VendorID" name="VendorID">
+							<!-- Dropdown options will be populated dynamically -->
+						</select>
+						<div class="input-group-append">
+							<!-- Add input-group-append for the arrow icon -->
+							<span class="input-group-text">
+								<i class="bi bi-chevron-down"></i> <!-- Use any icon you prefer -->
+							</span>
+						</div>
+					</div>
+				</div>
+				<div class="form-group">
+					<label for="ReviewScore"><b>Review Score (Out of 5):</b></label>
+					<input type="number" step="0.01" max="5" min="0" class="form-control" id="ReviewScore" name="ReviewScore" />
+				</div>
+				<div class="form-group">
+					<label for="ReviewText"><b>Review Text:</b></label>
+					<input type="text" class="form-control" id="ReviewText" name="ReviewText" />
+				</div>
+			</form>
+		</div>
+		<div class="modal-footer">
+			<button type="button" onclick="saveReviewChanges()" class="btn btn-primary">Save</button>
+			<button type="button" class="btn btn-secondary" onclick="closeReviewEditModal()">Close</button>
+		</div>
+	</div>
+</div>
+
+<script>
+
+	// Function to close the merch review edit modal
+	function closeReviewEditModal() {
+		document.getElementById("reviewEditModal").style.display = "none";
+	}
+
+	// Function to open the review edit modal with data
+	function openEditModal(VendorID, ReviewScore, ReviewText) {
+
+		$.ajax({
+			url: '/VendorReviews/GetVendors', // Update with your controller action to get vendors
+			type: 'GET',
+			success: function (vendors) {
+				// Clear existing options
+				$('#VendorID').empty();
+				// Populate the dropdown with vendors
+				$('#VendorID').append('<option value="0">Select Vendor</option>');
+				vendors.forEach(function (vendor) {
+					$('#VendorID').append('<option value="' + vendor.vendorID + '">' + vendor.name + '</option>');
+				});
+				// Select the current vendor if available
+				$('#VendorID').val(VendorID);
+			},
+			error: function (error) {
+				console.error(error);
+				// Handle error if necessary
+			}
+		});
+
+		$('#VendorID').val(VendorID); // Select the appropriate vendor item in the dropdown
+		document.getElementById("ReviewScore").value = ReviewScore;
+		document.getElementById("ReviewText").value = ReviewText;
+
+		document.getElementById("reviewEditModal").style.display = "block";
+	}
+
+	// Function to add the review
+	function saveReviewChanges() {
+		var formData = {
+			VendorID: $('#VendorID').val(), // Get the selected vendor from the dropdown
+			ReviewScore: $('#ReviewScore').val(),
+			ReviewText: $('#ReviewText').val()
+		};
+
+		$.ajax({
+			url: '/VendorReviews/SaveChanges',
+			type: 'POST',
+			contentType: 'application/json',
+			data: JSON.stringify(formData),
+			success: function (data) {
+				alert(data);
+				closeReviewEditModal();
+				location.reload();
+			},
+			error: function (error) {
+				console.error(error);
+				alert(error.responseText);
+			}
+		});
+	}
+</script>
