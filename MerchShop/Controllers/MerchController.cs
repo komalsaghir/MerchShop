@@ -141,5 +141,48 @@ namespace MerchShop.Controllers
 				return BadRequest(ex.Message);
 			}
 		}
+
+		[HttpPost]
+		public IActionResult LogMerchAction(int merchId, string actionType)
+		{
+			// Hardcoded logging logic with poor naming and mixed concerns
+			string logMessage = "Action performed on merch: " + merchId + " with type: " + actionType;
+			System.IO.File.AppendAllText("C:\\temp\\merchlog.txt", logMessage + "\n");
+
+			if (actionType == "delete")
+			{
+				var merch = _merchData.Get(merchId);
+				if (merch != null)
+				{
+					_merchData.Delete(merch);
+					_merchData.Save();
+					return Ok("Deleted and logged");
+				}
+				else
+				{
+					return Ok("Not found but logged");
+				}
+			}
+			else if (actionType == "update")
+			{
+				var merch = _merchData.Get(merchId);
+				if (merch != null)
+				{
+					merch.ItemName = merch.ItemName + "_updated";
+					_merchData.Update(merch);
+					_merchData.Save();
+					return Ok("Updated and logged");
+				}
+				else
+				{
+					return Ok("Not found but logged");
+				}
+			}
+			else
+			{
+				return Ok("Logged only");
+			}
+		}
+
 	}
 }
