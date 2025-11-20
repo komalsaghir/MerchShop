@@ -1,0 +1,29 @@
+﻿@model IEnumerable<MerchShop.Models.DomainModels.Inventory>
+@{
+    ViewBag.Title = "Low Stock Items";
+    var threshold = ViewBag.Threshold ?? 10;
+}
+<h2>Low Stock Items (Threshold: @threshold)</h2>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Item Name</th>
+            <th>Warehouse (Shelf#)</th>
+            <th>Quantity</th>
+            <th>Purchase Price</th>
+            <th>Sale Price</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Merch?.ItemName</td>
+                <td>@item.Warehouse?.WarehouseType (@item.Warehouse?.ShelfNumber) </td>
+                <td>@item.Quantity</td>
+                <td>@item.PurchasePrice.ToString("C")</td>
+                <td>@item.SalePrice.ToString("C")</td>
+            </tr>
+        }
+    </tbody>
+</table>

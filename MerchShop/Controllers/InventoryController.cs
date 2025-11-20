@@ -6,8 +6,6 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MerchShop.Controllers
 {
-	[ApiController]
-	[Route("[controller]/[action]")]
 	public class InventoryController : Controller
 	{
 		private readonly Repository<Inventory> _inventoryData;
@@ -67,15 +65,6 @@ namespace MerchShop.Controllers
 		[HttpPost]
 		public IActionResult SaveChanges([FromBody] Inventory inventory)
 		{
-			if (!ModelState.IsValid ||
-				inventory.LocationID == 0 ||
-				inventory.MerchID == 0 ||
-				inventory.PurchasePrice == 0 ||
-				inventory.SalePrice == 0)
-			{
-				return BadRequest("Invalid data. Fill all fields");
-			}
-
 			try
 			{
 				if (inventory.ItemID == 0)
@@ -129,5 +118,19 @@ namespace MerchShop.Controllers
 				return BadRequest(ex.Message);
 			}
 		}
+
+		[HttpGet]
+		public IActionResult LowStock(int threshold = 10)
+		{
+			var lowStockItems = _inventoryData.List(new QueryOptions<Inventory>
+			{
+				Where = i => i.Quantity < threshold,
+				Includes = "Merch, Warehouse"
+			});
+
+			ViewBag.Threshold = threshold;
+			return View(lowStockItems);
+		}
+
 	}
 }

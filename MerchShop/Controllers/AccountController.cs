@@ -9,8 +9,6 @@ using Microsoft.AspNetCore.Mvc.Infrastructure;
 using System.Security.Claims;
 using MerchShop.Models.DataAccessLayer;
 
-[ApiController]
-[Route("[controller]/[action]")]
 public class AccountController : Controller
 {
 	private readonly SignInManager<AppUser> _signInManager;
