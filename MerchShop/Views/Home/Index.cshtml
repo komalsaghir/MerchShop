@@ -7,6 +7,8 @@
 	var isAdmin = User.IsInRole("Admin");
 	var user = await UserManager.GetUserAsync(User);
 	var firstName = user?.FirstName;
+
+	var lowStockCount = (int?)ViewBag.LowStockCount ?? 0;
 }
 
 <!DOCTYPE html>
@@ -81,18 +83,34 @@
 					<p class="lead">Manage your merch database efficiently.</p>
 					<hr class="my-4">
 					<p>View, edit, and manage inventory, vendors, and orders.</p>
-					<br /><br />
+					<br />
+
+					<br />
 					<a class="btn btn-primary btn-lg float-end" href="@Url.Action("Index","Merch")" role="button">Manage Merch</a>
-					<br /><br />
+					<br />
+
+					<br />
+
+					@if (lowStockCount > 0)
+					{
+						<div class="alert alert-warning">
+							There are @lowStockCount items low in stock! <a href="@Url.Action("LowStock", "Inventory")">View Details</a>
+						</div>
+					}
+
 				}
 				else
 				{
 					<p class="lead">Explore and interact with our merch database.</p>
 					<hr class="my-4">
 					<p>Rate merches, vendors, and place orders.</p>
-					<br /><br />
+					<br />
+
+					<br />
 					<a class="btn btn-primary btn-lg float-end" href="@Url.Action("ViewMerches","Merch")" role="button">Explore</a>
-					<br /><br />
+					<br />
+
+					<br />
 				}
 			</div>
 		</div>

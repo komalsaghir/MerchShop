@@ -3,6 +3,7 @@ using MerchShop.Models;
 using MerchShop.Models.DataAccessLayer;
 using MerchShop.Models.DomainModels;
 using Microsoft.EntityFrameworkCore;
+using MerchShop.Services;
 
 namespace MerchShop.Controllers
 {
@@ -77,6 +78,16 @@ namespace MerchShop.Controllers
 					_inventoryData.Update(inventory);
 				}
 				_inventoryData.Save();
+				if (inventory.Quantity < 10)
+				{
+					// Call your email service here
+					inventory = _inventoryData.Get(new QueryOptions<Inventory>
+					{
+						Where = i => i.ItemID == inventory.ItemID,
+						Includes = "Merch"
+					});
+					EmailService.SendLowStockAlert(inventory);
+				}
 				return Ok("Changes saved successfully");
 			}
 			catch (DbUpdateConcurrencyException)
