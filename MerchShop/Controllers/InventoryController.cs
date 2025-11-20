@@ -6,6 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MerchShop.Controllers
 {
+	[ApiController]
+	[Route("[controller]/[action]")]
 	public class InventoryController : Controller
 	{
 		private readonly Repository<Inventory> _inventoryData;
@@ -50,6 +52,7 @@ namespace MerchShop.Controllers
 			return View(vm);
 		}
 
+		[HttpGet("{id}")]
 		public IActionResult Details(int id)
 		{
 			var inventory = _inventoryData.Get(new QueryOptions<Inventory>
@@ -62,70 +65,59 @@ namespace MerchShop.Controllers
 		}
 
 		[HttpPost]
-		public async Task<IActionResult> SaveChanges([FromBody] Inventory inventory)
+		public IActionResult SaveChanges([FromBody] Inventory inventory)
 		{
-			if (inventory.LocationID!=0 && inventory.MerchID!=0
-				&& inventory.PurchasePrice != 0 && inventory.SalePrice != 0 )
+			if (!ModelState.IsValid ||
+				inventory.LocationID == 0 ||
+				inventory.MerchID == 0 ||
+				inventory.PurchasePrice == 0 ||
+				inventory.SalePrice == 0)
 			{
-				try
-				{
-					if (inventory.ItemID == 0)
-					{
-						inventory.Warehouse = _warehouseData.Get(inventory.LocationID);
-						_inventoryData.Insert(inventory);
-					}
-					else
-					{
-						_inventoryData.Update(inventory);
-					}
-					_inventoryData.Save();
-				}
-				catch (DbUpdateConcurrencyException ex)
-				{
-					if (!InventoryExists(inventory.ItemID))
-					{
-						return NotFound();
-					}
-					else
-					{
-						throw;
-					}
-				}
-				catch (Exception ex)
-				{
-					throw;
-				}
-				return Ok("Changes saved successfully"); // Return success message
+				return BadRequest("Invalid data. Fill all fields");
 			}
-			else
+
+			try
 			{
-				return BadRequest("Invalid data. Fill all fields"); // Return bad request if model state is invalid
+				if (inventory.ItemID == 0)
+				{
+					inventory.Warehouse = _warehouseData.Get(inventory.LocationID);
+					_inventoryData.Insert(inventory);
+				}
+				else
+				{
+					_inventoryData.Update(inventory);
+				}
+				_inventoryData.Save();
+				return Ok("Changes saved successfully");
+			}
+			catch (DbUpdateConcurrencyException)
+			{
+				if (!InventoryExists(inventory.ItemID))
+				{
+					return NotFound();
+				}
+				throw;
 			}
 		}
 
-		private bool InventoryExists(int id)
-		{
-			var inventory = _inventoryData.Get(id);
-			if (inventory != null)
-				return true;
-			else return false;
-		}
+		private bool InventoryExists(int id) =>
+			_inventoryData.Get(id) != null;
 
-		// GET: /Inventory/Delete/5
-		[HttpPost]
-		public async Task<IActionResult> Delete(int id)
+		// POST: /Inventory/Delete/5
+		[HttpPost("Delete/{id}")]
+		public IActionResult Delete(int id)
 		{
 			try
 			{
-				// Retrieve the merch from the database
-				var merch = _inventoryData.Get(id);
-				if (merch == null)
+				// Retrieve the inventory from the database
+				var inventory = _inventoryData.Get(id);
+				if (inventory == null)
 				{
 					return NotFound();
 				}
 
-				// Remove the merch from the database
-				_inventoryData.Delete(merch);
+				// Remove the inventory from the database
+				_inventoryData.Delete(inventory);
 				_inventoryData.Save();
 
 				// Return success message
@@ -137,6 +129,5 @@ namespace MerchShop.Controllers
 				return BadRequest(ex.Message);
 			}
 		}
-
 	}
 }
