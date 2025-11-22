@@ -33,88 +33,75 @@ namespace MerchShop.Controllers
 		[HttpPost]
 		public async Task<IActionResult> PlaceOrder([FromBody] List<OrderDetailModel> orderDetails)
 		{
+			// --- Validate request body ---
+			if (!ModelState.IsValid)
+				return BadRequest("Invalid data. Fill all fields");
+
+			if (orderDetails == null || !orderDetails.Any())
+				return BadRequest("Order cannot be empty");
+
+
 			try
 			{
-				if (ModelState.IsValid)
+				// --- Resolve user ---
+				var email = User.FindFirstValue(ClaimTypes.Email);
+				if (string.IsNullOrEmpty(email))
+					return BadRequest("User not found");
+
+				var user = await _userManager.FindByEmailAsync(email);
+				if (user == null)
+					return BadRequest("User not found");
+
+
+				// --- Resolve customer ---
+				var customer = await _context.Customers
+					.FirstOrDefaultAsync(c => c.UserID == user.Id);
+
+				if (customer == null)
+					return BadRequest("Customer not found");
+
+
+				// --- Create order ---
+				var order = new Order
 				{
-					var userEmail = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+					CustomerID = customer.CustomerID,
+					Date = DateTime.Now,
+					Total = orderDetails.Sum(od => od.Price * od.Quantity)
+				};
 
-					// Find the user based on the email address
-					var user = await _userManager.FindByEmailAsync(userEmail);
-
-					if (user != null)
-					{
-						// Get the user ID
-						var userId = user.Id;
-
-						// Find the customer based on the user ID
-						var customer = await _context.Customers.FirstOrDefaultAsync(c => c.UserID == userId);
-
-						if (customer != null)
-						{
-							// Create the order entity
-							var order = new Order
-							{
-								CustomerID = customer.CustomerID,
-								Date = DateTime.Now,
-								Total = orderDetails.Sum(od => od.Quantity * od.Price) // Calculate the total based on order details
-							};
-
-							// Add the order to the database context
-							_context.Orders.Add(order);
-							await _context.SaveChangesAsync();
-
-							// Create order line entities and add them to the database context
-							foreach (var orderDetail in orderDetails)
-							{
-								// Query the database to retrieve the InventoryItemID based on the MerchID
-								var inventoryItem = await _context.Inventory.FirstOrDefaultAsync(i => i.MerchID == orderDetail.MerchID);
-
-								if (inventoryItem != null)
-								{
-									var orderLine = new OrderLines
-									{
-										OrderID = order.OrderID,
-										ItemID = orderDetail.MerchID,
-										Quantity = orderDetail.Quantity,
-										SubTotal = orderDetail.Quantity * orderDetail.Price,
-										InventoryItemID = inventoryItem.ItemID,
-									};
-
-									_context.OrderLines.Add(orderLine);
-								}
-								else
-								{
-									// Handle the case where InventoryItemID is not found for the given MerchID
-									// You can log an error or take appropriate action
-									return BadRequest("Inventory not found. OUT OF STOCK!");
-								}
-							}
+				_context.Orders.Add(order);
+				await _context.SaveChangesAsync();
 
 
-							await _context.SaveChangesAsync();
-
-							return Ok("Order placed successfully");
-						}
-						else
-						{
-							return BadRequest("Customer not found");
-						}
-					}
-					else
-					{
-						return BadRequest("User not found");
-					}
-				}
-				else
+				// --- Create order lines ---
+				foreach (var detail in orderDetails)
 				{
-					return BadRequest("Invalid data. Fill all fields");
+					var inventoryItem = await _context.Inventory
+						.FirstOrDefaultAsync(i => i.MerchID == detail.MerchID);
+
+					if (inventoryItem == null)
+						return BadRequest("Inventory not found. OUT OF STOCK!");
+
+					var orderLine = new OrderLines
+					{
+						OrderID = order.OrderID,
+						ItemID = detail.MerchID,
+						Quantity = detail.Quantity,
+						SubTotal = detail.Quantity * detail.Price,
+						InventoryItemID = inventoryItem.ItemID
+					};
+
+					_context.OrderLines.Add(orderLine);
 				}
+
+				await _context.SaveChangesAsync();
+				return Ok("Order placed successfully");
 			}
-			catch (Exception ex)
+			catch
 			{
 				return StatusCode(500, "An error occurred while processing the request");
 			}
 		}
+
 	}
 }

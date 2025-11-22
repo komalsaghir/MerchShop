@@ -29,47 +29,51 @@ namespace MerchShop.Controllers
 		[HttpGet]
 		public async Task<IActionResult> Index(VendorReviewGridData values)
 		{
-			var userEmail = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
-
-			// Find the user based on the email address
-			var user = await _userManager.FindByEmailAsync(userEmail);
-
-			if (user != null)
-			{
-				var customer = _context.Customers.Where(x => x.UserID == user.Id).FirstOrDefault();
-
-				if (customer != null)
-				{
-					var options = new QueryOptions<VendorReview>
-					{
-						Includes = "Vendor",
-						Where = a => a.CustomerID == customer.CustomerID,
-						PageNumber = values.PageNumber,
-						PageSize = values.PageSize,
-						OrderByDirection = values.SortDirection
-					};
-
-					// Check if sorting is based on Title or Quantity etc
-					if (values.IsSortByTitle)
-						options.OrderBy = a => a.Vendor.Name;
-					else if (values.SortField == "ReviewText")
-						options.OrderBy = a => a.ReviewText;
-					else if (values.SortField == "ReviewScore")
-						options.OrderBy = a => a.ReviewScore;
-
-					// Update the ViewModel with sorted data
-					var vm = new VendorReviewListViewModel
-					{
-						VendorReviews = _vendorReviewsData.List(options),
-						CurrentRoute = values,
-						TotalPages = values.GetTotalPages(_vendorData.Count)
-					};
-
-					return View(vm);
-				}
+			// --- Get user email ---
+			var email = User.FindFirstValue(ClaimTypes.Email);
+			if (string.IsNullOrEmpty(email))
 				return View();
-			}
-			return View();
+
+			// --- Resolve user ---
+			var user = await _userManager.FindByEmailAsync(email);
+			if (user == null)
+				return View();
+
+			// --- Resolve customer ---
+			var customer = await _context.Customers
+				.FirstOrDefaultAsync(c => c.UserID == user.Id);
+
+			if (customer == null)
+				return View();
+
+
+			// --- Build query options ---
+			var options = new QueryOptions<VendorReview>
+			{
+				Includes = "Vendor",
+				Where = r => r.CustomerID == customer.CustomerID,
+				PageNumber = values.PageNumber,
+				PageSize = values.PageSize,
+				OrderByDirection = values.SortDirection,
+				OrderBy = values.SortField switch
+				{
+					"Title" or null when values.IsSortByTitle => r => r.Vendor.Name,
+					"ReviewText" => r => r.ReviewText,
+					"ReviewScore" => r => r.ReviewScore,
+					_ => null
+				}
+			};
+
+
+			// --- Build view model ---
+			var vm = new VendorReviewListViewModel
+			{
+				VendorReviews = _vendorReviewsData.List(options),
+				CurrentRoute = values,
+				TotalPages = values.GetTotalPages(_vendorData.Count)
+			};
+
+			return View(vm);
 		}
 
 		public IActionResult Details(int id)
@@ -97,49 +101,55 @@ namespace MerchShop.Controllers
 		[HttpPost]
 		public async Task<IActionResult> SaveChanges([FromBody] VendorReview review)
 		{
-			if (review.VendorID != 0 && review.ReviewText.Trim() != "")
+			// --- Input validation ---
+			if (review.VendorID == 0 || string.IsNullOrWhiteSpace(review.ReviewText))
+				return BadRequest("Invalid data. Fill all fields");
+
+			if (review.ReviewScore > 5)
+				return Ok("Rating Score must be less than or equal to 5");
+
+
+			try
 			{
-				if (review.ReviewScore > 5)
-				{
-					return Ok("Rating Score must be less than or equal to 5");
-				}
-				try
-				{
-					var userEmail = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+				// --- Resolve user ---
+				var email = User.FindFirstValue(ClaimTypes.Email);
+				if (string.IsNullOrEmpty(email))
+					return BadRequest("User not found");
 
-					// Find the user based on the email address
-					var user = await _userManager.FindByEmailAsync(userEmail);
+				var user = await _userManager.FindByEmailAsync(email);
+				if (user == null)
+					return BadRequest("User not found");
 
-					if (user != null)
-					{
-						// Find the customer based on the user ID
-						var customer = _context.Customers.Where(x => x.UserID == user.Id).FirstOrDefault();
+				// --- Resolve customer ---
+				var customer = await _context.Customers
+					.FirstOrDefaultAsync(c => c.UserID == user.Id);
 
-						if (customer != null)
-						{
-							var reviewExists = _vendorReviewsData.Get().Where(x => x.VendorID == review.VendorID && x.CustomerID == review.CustomerID);
-							if (reviewExists.Count() > 0)
-							{
-								_vendorReviewsData.Update(review);
-							}
-							else
-							{
-								review.CustomerID = customer.CustomerID;
-								_vendorReviewsData.Insert(review);
-							}
-							_vendorReviewsData.Save();
-						}
-					}
-				}
-				catch (Exception ex)
+				if (customer == null)
+					return BadRequest("Customer not found");
+
+
+				// --- Check if review exists ---
+				var existingReview = _vendorReviewsData.Get()
+					.FirstOrDefault(r => r.VendorID == review.VendorID
+									  && r.CustomerID == customer.CustomerID);
+
+				// --- Update or insert ---
+				if (existingReview != null)
 				{
-					throw;
+					_vendorReviewsData.Update(review);
 				}
-				return Ok("Vendor Review saved successfully"); // Return success message
+				else
+				{
+					review.CustomerID = customer.CustomerID;
+					_vendorReviewsData.Insert(review);
+				}
+
+				_vendorReviewsData.Save();
+				return Ok("Vendor Review saved successfully");
 			}
-			else
+			catch (Exception ex)
 			{
-				return BadRequest("Invalid data. Fill all fields"); // Return bad request if model state is invalid
+				return BadRequest(ex.Message);
 			}
 		}
 
@@ -149,42 +159,39 @@ namespace MerchShop.Controllers
 		{
 			try
 			{
-				var userEmail = HttpContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+				// --- Resolve user ---
+				var email = User.FindFirstValue(ClaimTypes.Email);
+				if (string.IsNullOrEmpty(email))
+					return Ok("Not found!");
 
-				// Find the user based on the email address
-				var user = await _userManager.FindByEmailAsync(userEmail);
+				var user = await _userManager.FindByEmailAsync(email);
+				if (user == null)
+					return Ok("Not found!");
 
-				if (user != null)
+				// --- Resolve customer ---
+				var customer = await _context.Customers
+					.FirstOrDefaultAsync(c => c.UserID == user.Id);
+
+				if (customer == null)
+					return Ok("Not found!");
+
+				// --- Fetch review ---
+				var review = _vendorReviewsData.Get(new QueryOptions<VendorReview>
 				{
-					// Find the customer based on the user ID
-					var customer = _context.Customers.Where(x => x.UserID == user.Id).FirstOrDefault();
+					Where = r => r.VendorID == id && r.CustomerID == customer.CustomerID
+				});
 
-					if (customer != null)
-					{
+				if (review == null)
+					return NotFound();
 
-						// Retrieve the merch from the database
-						var merch = _vendorReviewsData.Get(new QueryOptions<VendorReview>
-						{
-							Where = a => a.VendorID == id && a.CustomerID == customer.CustomerID,
-						});
-						if (merch == null)
-						{
-							return NotFound();
-						}
+				// --- Delete review ---
+				_vendorReviewsData.Delete(review);
+				_vendorReviewsData.Save();
 
-						// Remove the merch from the database
-						_vendorReviewsData.Delete(merch);
-						_vendorReviewsData.Save();
-
-						// Return success message
-						return Ok("Review deleted successfully");
-					}
-				}
-				return Ok("Not found!");
+				return Ok("Review deleted successfully");
 			}
 			catch (Exception ex)
 			{
-				// Return error message
 				return BadRequest(ex.Message);
 			}
 		}

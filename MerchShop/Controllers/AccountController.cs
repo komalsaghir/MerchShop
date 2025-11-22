@@ -8,6 +8,7 @@ using MerchShop.Models.DomainModels;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using System.Security.Claims;
 using MerchShop.Models.DataAccessLayer;
+namespace MerchShop.Controllers;
 
 public class AccountController : Controller
 {
